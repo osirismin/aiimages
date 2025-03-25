@@ -34,10 +34,10 @@ const PRESET_SIZES: ImageSize[] = [
 ];
 
 const STYLE_PROMPTS = {
-  realistic: '写实风格',
-  anime: '动漫风格',
-  oil: '油画风格',
-  watercolor: '水彩风格'
+  realistic: '写实风格，真实照片效果',
+  anime: '动漫风格，二次元插画效果',
+  oil: '油画风格，厚重笔触效果',
+  watercolor: '水彩风格，清新淡雅效果'
 };
 
 export default function Home() {
