@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, History, Settings2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import Image from 'next/image';
 
 interface GeneratedImage {
   id: string;
@@ -253,10 +254,12 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: `${selectedSize.width}/${selectedSize.height}` }}>
-                    <img
+                    <Image
                       src={imageUrl}
                       alt={prompt}
-                      className="object-cover w-full h-full"
+                      fill
+                      className="object-cover"
+                      unoptimized
                     />
                   </div>
                 </div>
@@ -270,10 +273,12 @@ export default function Home() {
                 <Card key={image.id} className="p-4">
                   <div className="flex gap-4">
                     <div className="relative w-24 h-24 overflow-hidden rounded-lg">
-                      <img
+                      <Image
                         src={image.url}
                         alt={image.prompt}
-                        className="object-cover w-full h-full"
+                        fill
+                        className="object-cover"
+                        unoptimized
                       />
                     </div>
                     <div className="flex-1 space-y-2">
