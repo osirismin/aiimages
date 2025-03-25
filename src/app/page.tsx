@@ -57,7 +57,6 @@ export default function Home() {
   const [steps, setSteps] = useState('30');
   const [cfgScale, setCfgScale] = useState('7.5');
   const [sampler, setSampler] = useState('euler_a');
-  const [negativePrompt, setNegativePrompt] = useState('');
 
   const handleSizeChange = (value: string) => {
     if (value === 'custom') {
@@ -123,11 +122,6 @@ export default function Home() {
         sampler: sampler
       });
       
-      // 只有当负面提示词不为空时才添加
-      if (negativePrompt.trim()) {
-        params.append('negative_prompt', negativePrompt.trim());
-      }
-      
       const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?${params}`;
       setImageUrl(url);
       
@@ -192,23 +186,10 @@ export default function Home() {
               </label>
               <Textarea
                 id="prompt"
-                placeholder="例如：一只可爱的猫咪在阳光下玩耍..."
+                placeholder="例如：一只可爱的猫咪在阳光下玩耍"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 className="min-h-[100px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="negativePrompt" className="text-sm font-medium">
-                负面提示词（可选）
-              </label>
-              <Textarea
-                id="negativePrompt"
-                placeholder="例如：模糊、低质量、扭曲..."
-                value={negativePrompt}
-                onChange={(e) => setNegativePrompt(e.target.value)}
-                className="min-h-[60px]"
               />
             </div>
 
