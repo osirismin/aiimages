@@ -26,11 +26,11 @@ interface ImageSize {
 }
 
 const PRESET_SIZES: ImageSize[] = [
-  { width: 512, height: 512, label: '1:1', ratio: '1:1' },
-  { width: 768, height: 512, label: '3:2', ratio: '3:2' },
-  { width: 512, height: 768, label: '2:3', ratio: '2:3' },
-  { width: 768, height: 432, label: '16:9', ratio: '16:9' },
-  { width: 432, height: 768, label: '9:16', ratio: '9:16' },
+  { width: 1024, height: 1024, label: '1:1', ratio: '1:1' },
+  { width: 1024, height: 683, label: '3:2', ratio: '3:2' },
+  { width: 1024, height: 1536, label: '2:3', ratio: '2:3' },
+  { width: 1024, height: 576, label: '16:9', ratio: '16:9' },
+  { width: 1024, height: 1820, label: '9:16', ratio: '9:16' },
 ];
 
 const STYLE_PROMPTS = {
@@ -46,8 +46,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [style, setStyle] = useState('realistic');
   const [history, setHistory] = useState<GeneratedImage[]>([]);
-  const [customWidth, setCustomWidth] = useState('512');
-  const [customHeight, setCustomHeight] = useState('512');
+  const [customWidth, setCustomWidth] = useState('1024');
+  const [customHeight, setCustomHeight] = useState('1024');
   const [showSizeInputs, setShowSizeInputs] = useState(false);
   const [selectedSize, setSelectedSize] = useState<ImageSize>(PRESET_SIZES[0]);
 
