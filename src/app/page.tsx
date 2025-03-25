@@ -10,6 +10,7 @@ import { Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Image from 'next/image';
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface GeneratedImage {
   id: string;
@@ -50,6 +51,13 @@ export default function Home() {
   const [customHeight, setCustomHeight] = useState('1024');
   const [showSizeInputs, setShowSizeInputs] = useState(false);
   const [selectedSize, setSelectedSize] = useState<ImageSize>(PRESET_SIZES[0]);
+  
+  // 新增参数状态
+  const [seed, setSeed] = useState('100');
+  const [steps, setSteps] = useState('30');
+  const [cfgScale, setCfgScale] = useState('7.5');
+  const [sampler, setSampler] = useState('euler_a');
+  const [negativePrompt, setNegativePrompt] = useState('');
 
   const handleSizeChange = (value: string) => {
     if (value === 'custom') {
@@ -102,17 +110,38 @@ export default function Home() {
       // 将风格提示词添加到用户提示词中
       const fullPrompt = `${prompt}，${STYLE_PROMPTS[style as keyof typeof STYLE_PROMPTS]}`;
       const encodedPrompt = encodeURIComponent(fullPrompt);
-      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}`;
+      
+      // 构建 URL 参数
+      const params = new URLSearchParams({
+        width: selectedSize.width.toString(),
+        height: selectedSize.height.toString(),
+        model: 'flux',
+        nologo: 'true',
+        seed: seed,
+        steps: steps,
+        cfg_scale: cfgScale,
+        sampler: sampler
+      });
+      
+      // 只有当负面提示词不为空时才添加
+      if (negativePrompt.trim()) {
+        params.append('negative_prompt', negativePrompt.trim());
+      }
+      
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?${params}`;
       setImageUrl(url);
       
       // 添加到历史记录
       const newImage: GeneratedImage = {
         id: Date.now().toString(),
         url,
-        prompt: fullPrompt, // 保存完整的提示词
+        prompt: fullPrompt,
         timestamp: Date.now()
       };
       setHistory(prev => [newImage, ...prev].slice(0, 10));
+      
+      // 更新随机种子
+      setSeed((parseInt(seed) + 1).toString());
     } catch (error) {
       console.error('Error generating image:', error);
     } finally {
@@ -125,17 +154,28 @@ export default function Home() {
     
     try {
       const response = await fetch(imageUrl);
+      if (!response.ok) throw new Error('服务器响应异常');
+      
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
+      
+      // 生成更智能的文件名
+      const cleanPrompt = prompt
+        .substring(0, 30)
+        .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')
+        .replace(/_+/g, '_');
+      const filename = `AI_${cleanPrompt}_${Date.now()}.png`;
+      
       a.href = url;
-      a.download = `generated-image-${Date.now()}.png`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error downloading image:', error);
+      // 这里可以添加错误提示UI
     }
   };
 
@@ -156,6 +196,19 @@ export default function Home() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 className="min-h-[100px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="negativePrompt" className="text-sm font-medium">
+                负面提示词（可选）
+              </label>
+              <Textarea
+                id="negativePrompt"
+                placeholder="例如：模糊、低质量、扭曲..."
+                value={negativePrompt}
+                onChange={(e) => setNegativePrompt(e.target.value)}
+                className="min-h-[60px]"
               />
             </div>
 
@@ -224,6 +277,63 @@ export default function Home() {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="seed">随机种子</Label>
+                <Input
+                  id="seed"
+                  type="number"
+                  value={seed}
+                  onChange={(e) => setSeed(e.target.value)}
+                  min="0"
+                  max="999999"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="steps">采样步数</Label>
+                <Input
+                  id="steps"
+                  type="number"
+                  value={steps}
+                  onChange={(e) => setSteps(e.target.value)}
+                  min="1"
+                  max="150"
+                  step="1"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cfgScale">CFG Scale</Label>
+                <Input
+                  id="cfgScale"
+                  type="number"
+                  value={cfgScale}
+                  onChange={(e) => setCfgScale(e.target.value)}
+                  min="1"
+                  max="20"
+                  step="0.5"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sampler">采样器</Label>
+                <Select value={sampler} onValueChange={setSampler}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="选择采样器" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="euler_a">Euler Ancestral</SelectItem>
+                    <SelectItem value="euler">Euler</SelectItem>
+                    <SelectItem value="lms">LMS</SelectItem>
+                    <SelectItem value="heun">Heun</SelectItem>
+                    <SelectItem value="dpm2">DPM2</SelectItem>
+                    <SelectItem value="dpm2_a">DPM2 Ancestral</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             
             <Button 
               onClick={generateImage} 
@@ -254,13 +364,36 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: `${selectedSize.width}/${selectedSize.height}` }}>
+                    {loading ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+                        <div className="flex flex-col items-center gap-4">
+                          <LoadingSpinner className="w-16 h-16" />
+                          <p className="text-white text-lg font-medium">正在生成图片...</p>
+                          <p className="text-white/80 text-sm">这可能需要一些时间，请耐心等待</p>
+                        </div>
+                      </div>
+                    ) : null}
                     <Image
                       src={imageUrl}
                       alt={prompt}
                       fill
-                      className="object-cover"
+                      className="object-cover transition-opacity duration-300"
                       unoptimized
                     />
+                  </div>
+                </div>
+              </Card>
+            )}
+            {loading && !imageUrl && (
+              <Card className="p-6">
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-center">正在生成图片</h2>
+                  <div className="flex flex-col items-center justify-center space-y-6 py-8">
+                    <LoadingSpinner className="w-20 h-20" />
+                    <div className="text-center space-y-2">
+                      <p className="text-lg font-medium">请稍候，正在处理您的请求...</p>
+                      <p className="text-sm text-gray-500">生成高质量的图片需要一些时间</p>
+                    </div>
                   </div>
                 </div>
               </Card>
